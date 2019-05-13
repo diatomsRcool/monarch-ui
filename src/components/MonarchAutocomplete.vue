@@ -50,6 +50,7 @@
         @keydown.up="up"
         @keydown.esc="clearSearch"
         @blur="clearSearch"
+        @focus="closeFilterBox"
       >
 
       <div
@@ -109,7 +110,7 @@
             </div>
           </div>
         </div>
-        <div class="row">
+        <div class="row mx-3">
           <!--
           <div
             v-if="suggestions.length && !singleCategory"
@@ -121,9 +122,9 @@
  -->
           <div
             v-if="suggestions.length === 0"
-            class="btn col m-2"
+            class="col border"
           >
-            No results for '{{ value }}'
+            <b>No results for '{{ value }}'</b>
           </div>
           <!--
           <div
@@ -168,7 +169,7 @@ const exampleSearches = [
   },
   {
     searchString: 'Multicystic kidney dysplasia',
-    category: 'Phenotype'
+    category: 'phenotype'
   },
   {
     searchString: 'Shh',
@@ -277,7 +278,7 @@ export default {
         },
         {
           text: 'Phenotype',
-          value: 'Phenotype',
+          value: 'phenotype',
         },
         {
           text: 'Disease',
@@ -293,7 +294,9 @@ export default {
     debounceInput: debounce(
       function debounceInput() {
         if (!this.destroying) {
-          this.fetchData();
+          if (this.value && this.value.length > 0) {
+            this.fetchData();
+          }
         }
       }, 500, { leading: false, trailing: true }
     ),
@@ -324,6 +327,11 @@ export default {
       const currentData = this.suggestions[this.current];
       if (currentData) {
         if (!this.definedCategories) {
+          //
+          // Need to add Taxon Filter information here so that it can be picked up
+          // by Search.vue
+          // @nathandunn this might feed into the Search.vue and taxon faceting there.
+          //
           this.$router.push({ path: `/${currentData.category}/${currentData.curie}` });
         }
         else {
@@ -336,11 +344,15 @@ export default {
       this.value = '';
       this.open = false;
       this.suggestions = [];
+      this.categories = [];
     },
     up() {
       if (this.current > 0) {
         this.current -= 1;
       }
+    },
+    closeFilterBox() {
+      this.catDropDown = false;
     },
     toggleFilterBox() {
       this.catDropDown = !this.catDropDown;
@@ -372,6 +384,7 @@ export default {
       }
       this.value = '';
       this.open = false;
+      this.categories = [];
       this.suggestions = [];
     },
     showMore() {
@@ -389,7 +402,7 @@ export default {
       const validCats = {
         'gene': 'gene',
         'variant': 'variant',
-        'Phenotype': 'phenotype',
+        'phenotype': 'phenotype',
         'genotype': 'genotype',
         'disease': 'disease'
       };
